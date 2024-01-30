@@ -9,11 +9,11 @@ In your workflow, define a step which refers to the action:
 ```yml
   steps:
     # ...
-	- name: Composer Outdated
-	  id: composer_outdated
-	  uses: edwilde/composer-outdated-action
-	  with:
-	    extra-arguments: '--direct'
+    - name: Composer Outdated
+      id: composer_outdated
+      uses: edwilde/composer-outdated-action
+      with:
+        extra-arguments: '--direct'
 ```
 
 ## Preview
