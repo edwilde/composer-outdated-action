@@ -1,0 +1,22 @@
+name: 'Composer Outdated'
+description: 'Looks for outdated composer dependencies and generates a markdown report for use in a pull request.'
+author: 'Ed Wilde'
+branding:
+  color: green
+  icon: arrow-up-circle
+inputs:
+  extra-arguments:
+    description: 'Additional arguments passed to composer outdated command'
+    required: false
+outputs:
+  composer_outdated:
+    description: 'Markdown table of outdated dependencies'
+  composer_outdated_abandoned:
+    description: 'List of abandoned packages'
+  composer_outdated_exit_code:
+    description: 'Result of command (exit code) - use it to check the status'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.extra-arguments }}
