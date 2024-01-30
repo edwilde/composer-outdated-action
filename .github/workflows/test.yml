@@ -1,0 +1,16 @@
+name: Test GitHub Action
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run your action
+        uses: ./
+        with:
+          extra-arguments: '--direct'
