@@ -3,10 +3,10 @@
 git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
 ARGS=$*
-OUTDATED=$(composer outdated $ARGS)
+OUTDATED=$(composer outdated --ignore-platform-reqs $ARGS)
 EXIT_CODE=$?
 
-set -e
+echo "$OUTDATED"
 
 # Remove any abandoned packages from the list
 ABANDONED=$(echo "$OUTDATED" | grep 'abandoned')
@@ -35,3 +35,5 @@ echo "${delimiter}" >> "${GITHUB_OUTPUT}"
 echo "composer_outdated_abandoned<<${delimiter}" >> "${GITHUB_OUTPUT}"
 echo "${ABANDONED}" >> "${GITHUB_OUTPUT}"
 echo "${delimiter}" >> "${GITHUB_OUTPUT}"
+
+echo "Exit $EXIT_CODE"
