@@ -10,7 +10,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run your action
+      - name: Run the composer outdated action
+        id: composer_outdated
         uses: ./
         with:
           extra-arguments: '--direct'
+
+      - name: Output results
+        run: echo "${{ steps.composer_outdated.outputs.composer_outdated }}"
