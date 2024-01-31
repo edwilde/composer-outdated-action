@@ -81,10 +81,9 @@ Make sure the PHP extension is defined in `composer.json`
 
 ```json
 "config": {
-	"platform": {
-		"php": "8.1.0",
-		"ext-intl": "1.1.0"
-	},
-	...
+    "platform": {
+        "php": "8.1.0",
+        "ext-intl": "1.1.0"
+    },
 }
 ```
