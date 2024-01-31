@@ -1,0 +1,19 @@
+{
+    "name": "edwilde/composer-outdated-action",
+    "description": "Dummy composer configuration for testing",
+    "require": {
+        "silverstripe/framework": "^4"
+    },
+    "authors": [
+        {
+            "name": "Ed Wilde",
+            "email": "ed.wilde@silverstripe.com"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "silverstripe/vendor-plugin": true
+        }
+    }
+}
