@@ -68,3 +68,23 @@ This can be output in later steps using:
 ```
 ${{ steps.composer_outdated.outputs.composer_outdated_exit_code }}
 ```
+
+## Gotchas
+
+### Missing extension
+
+```
+Cannot use silverstripe/framework 4.13.39 as it requires ext-intl * which is missing from your platform.
+```
+
+Make sure the PHP extension is defined in `composer.json`
+
+```json
+"config": {
+	"platform": {
+		"php": "8.1.0",
+		"ext-intl": "1.1.0"
+	},
+	...
+}
+```
