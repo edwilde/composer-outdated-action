@@ -10,6 +10,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install dependencies
+        uses: php-actions/composer@v6
+        with:
+          php_version: 8.1
+          php_extensions: intl gd
+
       - name: Run the composer outdated action
         id: composer_outdated
         uses: ./
