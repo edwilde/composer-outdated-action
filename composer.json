@@ -2,7 +2,8 @@
     "name": "edwilde/composer-outdated-action",
     "description": "Dummy composer configuration for testing",
     "require": {
-        "silverstripe/framework": "^4"
+        "silverstripe/framework": "^4",
+        "betterbrief/silverstripe-googlemapfield": "^2.2"
     },
     "authors": [
         {
@@ -12,7 +13,7 @@
     ],
     "config": {
 		"platform": {
-			"php": "8.1.0",
+			"php": "8.1.2",
 			"ext-intl": "1.1.0"
 		},
         "allow-plugins": {
