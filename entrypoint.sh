@@ -8,8 +8,8 @@ EXIT_CODE=$?
 
 echo "$OUTDATED"
 
-table_legend="| Package | Current | Release | New | Details |"
-table_divider="| ------- | ------- | ------- | --- | ------- |"
+table_legend="| Package | Current | New | Compare | Details |"
+table_divider="| ------- | ------- | --- | ------- | ------- |"
 echo $table_legend
 echo $table_divider
 
@@ -17,6 +17,7 @@ echo $table_divider
 echo $OUTDATED | jq -c '.installed[]' | while IFS= read -r item
 
 do
+	# parse the package details
 	# echo $item;
     name=$(echo $item | jq -r ".name")
     direct_dependency=$(echo $item | jq -r '.["direct-dependency"]')
@@ -26,15 +27,12 @@ do
     latest=$(echo $item | jq -r '.["latest"]')
     latest_status=$(echo $item | jq -r '.["latest-status"]')
     description=$(echo $item | jq -r '.["description"]')
+	warning=$(echo $item | jq -r '.["warning"]')
     abandoned=$(echo $item | jq -r '.["abandoned"]')
 
-	# if the package is up-to-date, skip it
-	if [ "$latest_status" == "up-to-date" ]; then
-		continue
-	fi
-
-	# work out the github address from the source, removing everything after 'tree'
-	if [ -n "$source" ]; then
+	# check if the source url exists and contains a github address
+	if [ -n "$source" ] && [[ "$source" == *github.com* ]]; then
+		# extract the github repo url from the source url
 		github=$(echo $source | sed 's/\/tree.*//')
 	fi
 
@@ -51,17 +49,29 @@ do
 	fi
 
 	# if the package is abandoned, add a warning icon to the latest status
-	if [ -n "$abandoned" ]; then
+	if [ -n "$abandoned" ] && [ "$abandoned" != 'false' ]; then
 		latest_status="abandoned"
 	fi
 
+	# if a warning exists and is not empty, prefix the name with an icon
+	if [ -n "$warning" ] && [ "$warning" != 'null' ]; then
+		name=":warning: $name"
+	fi
+
+	# use the source url to compare the current and latest versions using github ... syntax
+	compare="$latest_status"
 	if [ -n "$github" ]; then
-		# use the source url to compare the current and latest versions using github ... syntax
-		latest="[$latest]($github/compare/$version...$latest)"
+		compare="[Compare]($github/compare/$version...$latest)"
+	fi
+
+	# truncate the description
+	truncate=25 # chars
+	if [ ${#description} -gt $truncate ]; then
+		description="${description:0:$truncate}…"
 	fi
 
 	# construct the table row
-    table="| $name | $version | $latest_status | $latest | $description |"
+    table="| $name | $version | $latest | $compare | $description |"
 	echo $table
 done
 
