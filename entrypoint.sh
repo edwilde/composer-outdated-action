@@ -29,16 +29,16 @@ echo $OUTDATED | jq -c '.installed[]' | while IFS= read -r item
 do
 	# parse the package details
 	# echo $item;
-    name=$(echo $item | jq -r ".name")
-    direct_dependency=$(echo $item | jq -r '.["direct-dependency"]')
-    homepage=$(echo $item | jq -r '.["homepage"]')
-    source=$(echo $item | jq -r '.["source"]')
-    version=$(echo $item | jq -r '.["version"]')
-    latest=$(echo $item | jq -r '.["latest"]')
-    latest_status=$(echo $item | jq -r '.["latest-status"]')
-    description=$(echo $item | jq -r '.["description"]')
+	name=$(echo $item | jq -r ".name")
+	direct_dependency=$(echo $item | jq -r '.["direct-dependency"]')
+	homepage=$(echo $item | jq -r '.["homepage"]')
+	source=$(echo $item | jq -r '.["source"]')
+	version=$(echo $item | jq -r '.["version"]')
+	latest=$(echo $item | jq -r '.["latest"]')
+	latest_status=$(echo $item | jq -r '.["latest-status"]')
+	description=$(echo $item | jq -r '.["description"]')
 	warning=$(echo $item | jq -r '.["warning"]')
-    abandoned=$(echo $item | jq -r '.["abandoned"]')
+	abandoned=$(echo $item | jq -r '.["abandoned"]')
 
 	# check if the source url exists and contains a github address
 	if [ -n "$source" ] && [[ "$source" == *github.com* ]]; then
@@ -81,7 +81,7 @@ do
 	fi
 
 	# construct the table row
-    table="| $name | $version | $latest | $compare | $description |"
+	table="| $name | $version | $latest | $compare | $description |"
 
 	# Output the table row to the standard output
 	echo $table
