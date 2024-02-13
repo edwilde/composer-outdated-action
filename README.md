@@ -11,23 +11,21 @@ In your workflow, define a step which refers to the action:
     # ...
     - name: Composer Outdated
       id: composer_outdated
-      uses: edwilde/composer-outdated-action
+      uses: edwilde/composer-outdated-action@2
       with:
         extra-arguments: '--direct'
 ```
 
 ## Preview
 
-This is an example of the output for the outdated table, then the abandoned packages.
+This is an example of the output for the outdated table, including the abandoned packages.
 
-| Package | Current | Release | New | Details |
-| ------- | ------- | ------- | --- | ------- |
-| andrewandante/silverstripe-pdf-parser | v2.0.0 | major | v3.0.0 | Adds PDFParser p... |
-| dnadesign/silverstripe-elemental | 4.11.7 | major | 5.1.3 | Elemental pagety... |
-| dnadesign/silverstripe-elemental-userforms | 3.3.4 | minor/patch | 3.3.5 | Adds a new eleme... |
-| heyday/silverstripe-menumanager | 3.3.0 | minor/patch | 3.4.0 | Allows complex m... |
-
-Package betterbrief/silverstripe-googlemapfield is abandoned, you should avoid using it. No replacement was suggested.
+| Package | Current | New | Compare | Details |
+| ------- | ------- | --- | ------- | ------- |
+| :warning: [betterbrief/silverstripe-googlemapfield](https://github.com/BetterBrief/silverstripe-googlemapfield) | v2.2.1 | v2.2.1 | [Compare](https://github.com/BetterBrief/silverstripe-googlemapfield/compare/v2.2.1...v2.2.1) | Save locations using lati… |
+| [bramus/monolog-colored-line-formatter](https://github.com/bramus/monolog-colored-line-formatter) | 2.0.3 | 3.1.2 | [Compare](https://github.com/bramus/monolog-colored-line-formatter/compare/2.0.3...3.1.2) | Colored Line Formatter fo… |
+| [doctrine/lexer](https://github.com/doctrine/lexer) | 2.1.0 | 3.0.1 | [Compare](https://github.com/doctrine/lexer/compare/2.1.0...3.0.1) | PHP Doctrine Lexer parser… |
+| [silverstripe/framework](https://github.com/silverstripe/silverstripe-framework) | 4.13.39 | 5.1.15 | [Compare](https://github.com/silverstripe/silverstripe-framework/compare/4.13.39...5.1.15) | The SilverStripe framewor… |
 
 ## Inputs
 
