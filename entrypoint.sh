@@ -10,8 +10,18 @@ echo "$OUTDATED"
 
 table_legend="| Package | Current | New | Compare | Details |"
 table_divider="| ------- | ------- | --- | ------- | ------- |"
+
+# Output the table to the standard output
 echo $table_legend
 echo $table_divider
+
+# Set a delimiter to allow for multi-line output
+delimiter="$(openssl rand -hex 8)"
+
+# Output the table to the github output
+echo "composer_outdated<<${delimiter}" >> "${GITHUB_OUTPUT}"
+echo "${table_legend}" >> "${GITHUB_OUTPUT}"
+echo "${table_divider}" >> "${GITHUB_OUTPUT}"
 
 # Parse the json response for each package
 echo $OUTDATED | jq -c '.installed[]' | while IFS= read -r item
@@ -72,36 +82,20 @@ do
 
 	# construct the table row
     table="| $name | $version | $latest | $compare | $description |"
+
+	# Output the table row to the standard output
 	echo $table
+
+	# Output the table row to the github output
+	echo "${table}" >> "${GITHUB_OUTPUT}"
 done
 
-# Remove any abandoned packages from the list
-# ABANDONED=$(echo "$OUTDATED" | grep 'abandoned')
-# OUTDATED=$(echo "$OUTDATED" | grep -v 'abandoned')
+# Close out the multi-line output for the table
+echo "" >> "${GITHUB_OUTPUT}"
+echo "${delimiter}" >> "${GITHUB_OUTPUT}"
 
-# # Construct the markdown table
+# Output the exit code for 'composer outdated'
+echo "composer_outdated_exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
 
-# table=$(echo "$OUTDATED" | awk -v OFS="|" 'BEGIN { FS = " " } ; { if ($3 != "=") { gsub("~", "major", $3); gsub("!", "minor/patch", $3); printf "| %s | %s | %s | %s |", $1, $2, $3, $4; for(i=5; i<=NF; i++) printf " %s", $i; print " |" } }')
-
-# # Set a delimiter to allow for multi-line output
-# delimiter="$(openssl rand -hex 8)"
-
-# # Output the exit code for 'composer outdated'
-# echo "composer_outdated_exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
-
-# # Output the table
-
-
-# echo "composer_outdated<<${delimiter}" >> "${GITHUB_OUTPUT}"
-# echo "${table_legend}" >> "${GITHUB_OUTPUT}"
-# echo "${table_divider}" >> "${GITHUB_OUTPUT}"
-# echo "${table}" >> "${GITHUB_OUTPUT}"
-# echo "" >> "${GITHUB_OUTPUT}"
-# echo "${delimiter}" >> "${GITHUB_OUTPUT}"
-
-# # Output the abandoned packages
-# echo "composer_outdated_abandoned<<${delimiter}" >> "${GITHUB_OUTPUT}"
-# echo "${ABANDONED}" >> "${GITHUB_OUTPUT}"
-# echo "${delimiter}" >> "${GITHUB_OUTPUT}"
-
-# echo "Exit $EXIT_CODE"
+# Exit with the exit code from 'composer outdated'
+echo "Exit $EXIT_CODE"
