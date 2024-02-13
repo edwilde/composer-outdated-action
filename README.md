@@ -47,16 +47,6 @@ This can be output in later steps using:
 ${{ steps.composer_outdated.outputs.composer_outdated }}
 ```
 
-### Abandoned packages list (`composer_outdated_abandoned`)
-
-If any abandoned packages are found, they are output in this variable as a list.
-
-This can be output in later steps using:
-
-```
-${{ steps.composer_outdated.outputs.composer_outdated_abandoned }}
-```
-
 ### Exit code (`composer_outdated_exit_code`)
 
 The raw exit code from the `composer outdated` command, useful for debugging.
@@ -80,7 +70,7 @@ Make sure the PHP extension is defined in `composer.json`
 ```json
 "config": {
     "platform": {
-        "php": "8.1.0",
+        "php": "8.1.2",
         "ext-intl": "1.1.0"
     },
 }
