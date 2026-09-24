@@ -8,9 +8,16 @@ inputs:
   extra-arguments:
     description: 'Additional arguments passed to composer outdated command'
     required: false
+  php-version:
+    description: 'PHP version updates must be compatible with. Defaults to config.platform.php in composer.json'
+    required: false
+  compatibility-packages:
+    description: 'Space-separated packages whose installed release line updates must stay compatible with'
+    required: false
+    default: 'php silverstripe/framework silverstripe/cms silverstripe/admin'
 outputs:
   composer_outdated:
-    description: 'Markdown table of outdated dependencies'
+    description: 'Markdown table of compatible updates, with incompatible packages collapsed below it'
   composer_outdated_abandoned:
     description: 'List of abandoned packages'
   composer_outdated_exit_code:
@@ -18,5 +25,8 @@ outputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  env:
+    PHP_VERSION: ${{ inputs.php-version }}
+    COMPATIBILITY_PACKAGES: ${{ inputs.compatibility-packages }}
   args:
     - ${{ inputs.extra-arguments }}
