@@ -1,0 +1,27 @@
+{
+	"name": "edwilde/composer-outdated-action",
+	"description": "Markdown report of outdated composer dependencies, split by compatibility with the project's platform.",
+	"license": "MIT",
+	"type": "project",
+	"require": {
+		"php": ">=8.1",
+		"composer/metadata-minifier": "^1.0",
+		"composer/semver": "^3.4"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^10.5"
+	},
+	"autoload": {
+		"psr-4": {
+			"ComposerOutdated\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"ComposerOutdated\\Tests\\": "tests/"
+		}
+	},
+	"config": {
+		"sort-packages": true
+	}
+}
