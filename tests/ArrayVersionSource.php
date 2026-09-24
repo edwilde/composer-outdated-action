@@ -5,6 +5,9 @@ namespace ComposerOutdated\Tests;
 use Composer\Semver\VersionParser;
 use ComposerOutdated\VersionSource;
 
+/**
+ * In-memory version source for tests.
+ */
 class ArrayVersionSource implements VersionSource
 {
 	/**
@@ -14,6 +17,10 @@ class ArrayVersionSource implements VersionSource
 	{
 	}
 
+	/**
+	 * @param string $package package name
+	 * @return array<int, array<string, mixed>>|null releases, or null when not defined
+	 */
 	public function versions(string $package): ?array
 	{
 		if (!isset($this->packages[$package])) {

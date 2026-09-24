@@ -10,12 +10,18 @@ class MarkdownReport
 {
 	private const DESCRIPTION_LENGTH = 25;
 
+	/**
+	 * @param CompatibilityChecker $checker decides which section each package goes in
+	 */
 	public function __construct(private CompatibilityChecker $checker)
 	{
 	}
 
 	/**
+	 * Renders the report.
+	 *
 	 * @param array<int, array<string, mixed>> $packages the `installed` (or `locked`) list from `composer outdated --format=json`
+	 * @return string markdown, ending in a newline
 	 */
 	public function render(array $packages): string
 	{
@@ -66,6 +72,14 @@ class MarkdownReport
 		return implode("\n", $lines) . "\n";
 	}
 
+	/**
+	 * Row for the compatible updates table.
+	 *
+	 * @param array<string, mixed> $package outdated package entry
+	 * @param CompatibilityResult $result its compatibility
+	 * @param bool $abandoned whether composer reports it as abandoned
+	 * @return string markdown table row
+	 */
 	private function openRow(array $package, CompatibilityResult $result, bool $abandoned): string
 	{
 		$current = $package['version'];
@@ -88,6 +102,13 @@ class MarkdownReport
 		]);
 	}
 
+	/**
+	 * Row for the collapsed table of packages without a compatible update.
+	 *
+	 * @param array<string, mixed> $package outdated package entry
+	 * @param CompatibilityResult $result its compatibility
+	 * @return string markdown table row
+	 */
 	private function collapsedRow(array $package, CompatibilityResult $result): string
 	{
 		$current = $package['version'];
@@ -105,6 +126,12 @@ class MarkdownReport
 		]);
 	}
 
+	/**
+	 * Package name, linked to its GitHub repository and flagged when composer warns about it.
+	 *
+	 * @param array<string, mixed> $package outdated package entry
+	 * @return string markdown
+	 */
 	private function name(array $package): string
 	{
 		$name = $package['name'];
@@ -118,6 +145,14 @@ class MarkdownReport
 		return $name;
 	}
 
+	/**
+	 * GitHub compare link between two versions.
+	 *
+	 * @param array<string, mixed> $package outdated package entry
+	 * @param string $from version to compare from
+	 * @param string $to version to compare to
+	 * @return string markdown link, or `-` when the source is not on GitHub
+	 */
 	private function compare(array $package, string $from, string $to): string
 	{
 		$github = $this->github($package);
@@ -127,6 +162,12 @@ class MarkdownReport
 		return sprintf('[Compare](%s/compare/%s...%s)', $github, $from, $to);
 	}
 
+	/**
+	 * GitHub repository URL from the package's source URL.
+	 *
+	 * @param array<string, mixed> $package outdated package entry
+	 * @return string|null repository URL, or null when the source is not on GitHub
+	 */
 	private function github(array $package): ?string
 	{
 		$source = $package['source'] ?? null;
@@ -136,6 +177,12 @@ class MarkdownReport
 		return preg_replace('#/tree.*$#', '', $source);
 	}
 
+	/**
+	 * Shortens a description to fit the table.
+	 *
+	 * @param string $text description
+	 * @return string at most DESCRIPTION_LENGTH characters plus an ellipsis
+	 */
 	private function truncate(string $text): string
 	{
 		if (mb_strlen($text) <= self::DESCRIPTION_LENGTH) {
@@ -145,7 +192,10 @@ class MarkdownReport
 	}
 
 	/**
-	 * @param string[] $cells
+	 * Markdown table row, with pipes and line breaks in cells escaped.
+	 *
+	 * @param string[] $cells cell contents
+	 * @return string markdown table row
 	 */
 	private function row(array $cells): string
 	{

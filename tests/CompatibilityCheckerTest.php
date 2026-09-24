@@ -11,6 +11,12 @@ class CompatibilityCheckerTest extends TestCase
 {
 	private const COMPATIBILITY = ['php', 'silverstripe/framework', 'silverstripe/cms', 'silverstripe/admin'];
 
+	/**
+	 * @param array<string, array<string, array<string, string>>> $packages package => version => require
+	 * @param string $php target PHP version
+	 * @param array<string, mixed> $lock composer.lock contents; defaults to framework 5.2.22 and cms 5.2.5
+	 * @return CompatibilityChecker
+	 */
 	private function checker(array $packages, string $php = '8.1', array $lock = []): CompatibilityChecker
 	{
 		$lock = $lock ?: [

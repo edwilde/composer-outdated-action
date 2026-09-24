@@ -17,6 +17,12 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 const DEFAULT_COMPATIBILITY_PACKAGES = 'php silverstripe/framework silverstripe/cms silverstripe/admin';
 
+/**
+ * Decodes a JSON file.
+ *
+ * @param string $path file path
+ * @return array<mixed> decoded contents, or an empty array when missing or invalid
+ */
 function readJson(string $path): array
 {
 	if (!is_file($path)) {

@@ -11,12 +11,24 @@ use Composer\Semver\Semver;
  */
 class CompatibilityChecker
 {
+	/**
+	 * @param Platform $platform target PHP version and locked compatibility packages
+	 * @param VersionSource $source where package releases are read from
+	 */
 	public function __construct(
 		private Platform $platform,
 		private VersionSource $source,
 	) {
 	}
 
+	/**
+	 * Checks an outdated package against the platform.
+	 *
+	 * @param string $package package name
+	 * @param string $installedVersion installed version as composer reports it
+	 * @return CompatibilityResult the newest compatible release, the blockers of the latest
+	 *     release when none is compatible, or unknown when the releases cannot be read
+	 */
 	public function check(string $package, string $installedVersion): CompatibilityResult
 	{
 		$package = strtolower($package);
@@ -44,7 +56,10 @@ class CompatibilityChecker
 	 * Releases newer than the installed one, newest first. Pre-releases only count when the
 	 * installed release is a pre-release of at least that stability; a dev branch counts as stable.
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @param array<int, array<string, mixed>> $versions every release of the package
+	 * @param string $installedVersion installed version as composer reports it
+	 * @param string $installed installed version, normalized
+	 * @return array<int, array<string, mixed>> candidate releases, newest first
 	 */
 	private function candidates(array $versions, string $installedVersion, string $installed): array
 	{
@@ -72,7 +87,10 @@ class CompatibilityChecker
 	/**
 	 * Why a candidate cannot be installed on the current platform, empty when it can.
 	 *
-	 * @return string[]
+	 * @param string $package package name, lowercase
+	 * @param string $installed installed version, normalized
+	 * @param array<string, mixed> $candidate candidate release
+	 * @return string[] blockers, e.g. `php ^8.3`, `silverstripe/framework ^6`, `silverstripe/cms 5.x`
 	 */
 	private function blockers(string $package, string $installed, array $candidate): array
 	{
@@ -117,6 +135,12 @@ class CompatibilityChecker
 	/**
 	 * Whether any release on the locked line of a compatibility package accepts the candidate.
 	 * Falls back to the locked release's own requirement when the package cannot be resolved.
+	 *
+	 * @param string $compatibility compatibility package name
+	 * @param array{version: string, normalized: string, require: array<string, string>} $locked locked release of it
+	 * @param string $package package being checked
+	 * @param string $candidate candidate version of that package, normalized
+	 * @return bool true when some release on the locked line allows the candidate
 	 */
 	private function lineAllows(string $compatibility, array $locked, string $package, string $candidate): bool
 	{

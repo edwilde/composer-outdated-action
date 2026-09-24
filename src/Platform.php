@@ -12,8 +12,10 @@ use UnexpectedValueException;
 class Platform
 {
 	/**
+	 * @param string|null $php target PHP version, normalized, or null to skip PHP checks
 	 * @param array<string, array{version: string, normalized: string, require: array<string, string>}> $locked
-	 * @param string[] $compatibilityPackages
+	 *     locked compatibility packages keyed by lowercase name
+	 * @param string[] $compatibilityPackages lowercase package names, `php` included
 	 */
 	public function __construct(
 		public readonly ?string $php,
@@ -23,7 +25,13 @@ class Platform
 	}
 
 	/**
-	 * @param string[] $compatibilityPackages
+	 * Builds the platform from a project's composer files.
+	 *
+	 * @param array<string, mixed> $composerJson decoded composer.json
+	 * @param array<string, mixed> $composerLock decoded composer.lock
+	 * @param string|null $phpVersion target PHP version; falls back to `config.platform.php`
+	 * @param string[] $compatibilityPackages lowercase package names, `php` included
+	 * @return self
 	 */
 	public static function fromProject(
 		array $composerJson,
@@ -54,7 +62,11 @@ class Platform
 	}
 
 	/**
-	 * A `major.minor` PHP version stands for the newest patch release of that line.
+	 * Normalizes the target PHP version. A `major.minor` version stands for the newest patch
+	 * release of that line.
+	 *
+	 * @param string|null $version PHP version, e.g. `8.3` or `8.1.2`
+	 * @return string|null normalized version, or null when empty or unparseable
 	 */
 	public static function normalizePhp(?string $version): ?string
 	{

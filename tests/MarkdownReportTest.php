@@ -9,6 +9,11 @@ use PHPUnit\Framework\TestCase;
 
 class MarkdownReportTest extends TestCase
 {
+	/**
+	 * Report over framework 5.2.22 on PHP 8.1, with one compatible, one blocked and one old package.
+	 *
+	 * @return MarkdownReport
+	 */
 	private function report(): MarkdownReport
 	{
 		$lock = ['packages' => [['name' => 'silverstripe/framework', 'version' => '5.2.22']]];
@@ -33,6 +38,15 @@ class MarkdownReportTest extends TestCase
 		));
 	}
 
+	/**
+	 * An entry as `composer outdated --format=json` reports it.
+	 *
+	 * @param string $name package name
+	 * @param string $version installed version
+	 * @param string $latest latest version
+	 * @param array<string, mixed> $extra fields to override
+	 * @return array<string, mixed>
+	 */
 	private function package(string $name, string $version, string $latest, array $extra = []): array
 	{
 		return $extra + [

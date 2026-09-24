@@ -7,6 +7,9 @@ use PHPUnit\Framework\TestCase;
 
 class PackagistVersionSourceTest extends TestCase
 {
+	/**
+	 * @return PackagistVersionSource reading from the local p2 fixtures
+	 */
 	private function source(): PackagistVersionSource
 	{
 		return new PackagistVersionSource(__DIR__ . '/fixtures/p2');

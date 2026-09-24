@@ -4,17 +4,30 @@ namespace ComposerOutdated;
 
 use Composer\MetadataMinifier\MetadataMinifier;
 
+/**
+ * Reads package releases from the Packagist p2 metadata API, one request per package.
+ */
 class PackagistVersionSource implements VersionSource
 {
 	/** @var array<string, array<int, array<string, mixed>>|null> */
 	private array $cache = [];
 
+	/**
+	 * @param string $baseUrl p2 endpoint, or a local directory laid out the same way
+	 * @param int $timeout request timeout in seconds
+	 */
 	public function __construct(
 		private string $baseUrl = 'https://repo.packagist.org/p2',
 		private int $timeout = 15,
 	) {
 	}
 
+	/**
+	 * Releases of a package, fetched once and cached for the lifetime of the source.
+	 *
+	 * @param string $package package name, e.g. `silverstripe/framework`
+	 * @return array<int, array<string, mixed>>|null releases, or null when unavailable
+	 */
 	public function versions(string $package): ?array
 	{
 		if (!array_key_exists($package, $this->cache)) {
@@ -24,6 +37,13 @@ class PackagistVersionSource implements VersionSource
 		return $this->cache[$package];
 	}
 
+	/**
+	 * Fetches and expands the p2 metadata for a package.
+	 *
+	 * @param string $package package name, e.g. `silverstripe/framework`
+	 * @return array<int, array<string, mixed>>|null releases, or null when the name is invalid,
+	 *     the request fails or the package has no releases
+	 */
 	private function fetch(string $package): ?array
 	{
 		if (!preg_match('#^[a-z0-9_.-]+/[a-z0-9_.-]+$#i', $package)) {
