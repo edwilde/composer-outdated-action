@@ -103,6 +103,30 @@ class Versions
 	}
 
 	/**
+	 * Least stable rank a newer release may have to be offered in place of this version:
+	 * the version's own stability, or stable when it is a dev branch.
+	 *
+	 * @param string $version pretty version, optionally with a trailing commit ref
+	 * @return int stability rank
+	 */
+	public static function maxCandidateRank(string $version): int
+	{
+		return self::stability($version) === 'dev' ? self::STABILITY_RANK['stable'] : self::stabilityRank($version);
+	}
+
+	/**
+	 * Whether a normalized version is a named branch such as `dev-main`, which has no place in
+	 * the numeric release order.
+	 *
+	 * @param string $normalized normalized version
+	 * @return bool
+	 */
+	public static function isNamedBranch(string $normalized): bool
+	{
+		return str_starts_with($normalized, 'dev-');
+	}
+
+	/**
 	 * Stability of a version.
 	 *
 	 * @param string $version pretty version, optionally with a trailing commit ref

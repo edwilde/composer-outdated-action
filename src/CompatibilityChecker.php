@@ -27,14 +27,19 @@ class CompatibilityChecker
 	 * @param string $package package name
 	 * @param string $installedVersion installed version as composer reports it
 	 * @return CompatibilityResult the newest compatible release, the blockers of the latest
-	 *     release when none is compatible, or unknown when the releases cannot be read
+	 *     release when none is compatible, or unknown when the releases cannot be read or the
+	 *     installed version is a named branch such as `dev-main`
 	 */
 	public function check(string $package, string $installedVersion): CompatibilityResult
 	{
 		$package = strtolower($package);
 		$installed = Versions::normalize($installedVersion);
+		if ($installed === null || Versions::isNamedBranch($installed)) {
+			return CompatibilityResult::unknown();
+		}
+
 		$versions = $this->source->versions($package);
-		if ($installed === null || $versions === null) {
+		if ($versions === null) {
 			return CompatibilityResult::unknown();
 		}
 
@@ -43,13 +48,18 @@ class CompatibilityChecker
 			return CompatibilityResult::unknown();
 		}
 
-		foreach ($candidates as $candidate) {
+		$latestBlockers = $this->blockers($package, $installed, $candidates[0]);
+		if (!$latestBlockers) {
+			return CompatibilityResult::compatible($candidates[0]['version'], $candidates[0]['version']);
+		}
+
+		foreach (array_slice($candidates, 1) as $candidate) {
 			if (!$this->blockers($package, $installed, $candidate)) {
 				return CompatibilityResult::compatible($candidate['version'], $candidates[0]['version']);
 			}
 		}
 
-		return CompatibilityResult::blocked($candidates[0]['version'], $this->blockers($package, $installed, $candidates[0]));
+		return CompatibilityResult::blocked($candidates[0]['version'], $latestBlockers);
 	}
 
 	/**
@@ -63,7 +73,7 @@ class CompatibilityChecker
 	 */
 	private function candidates(array $versions, string $installedVersion, string $installed): array
 	{
-		$maxRank = Versions::stability($installedVersion) === 'dev' ? 0 : Versions::stabilityRank($installedVersion);
+		$maxRank = Versions::maxCandidateRank($installedVersion);
 
 		$byNormalized = [];
 		foreach ($versions as $version) {
@@ -94,37 +104,19 @@ class CompatibilityChecker
 	 */
 	private function blockers(string $package, string $installed, array $candidate): array
 	{
-		$blockers = [];
-		$require = is_array($candidate['require'] ?? null) ? array_change_key_case($candidate['require'], CASE_LOWER) : [];
+		$require = $this->requirements($candidate);
+		$blockers = $this->forwardBlockers($require, $package);
 
-		foreach ($this->platform->compatibilityPackages as $compatibility) {
-			if ($compatibility === 'php') {
-				if ($this->platform->php !== null && isset($require['php'])
-					&& !Versions::satisfies($this->platform->php, $require['php'])) {
-					$blockers[] = 'php ' . $require['php'];
-				}
+		if (in_array($package, $this->platform->compatibilityPackages, true)
+			&& !Versions::satisfies($candidate['version_normalized'], Versions::lineConstraint($installed))) {
+			$blockers[] = $package . ' ' . Versions::lineLabel($installed);
+		}
+
+		foreach ($this->platform->locked as $compatibility => $locked) {
+			if ($compatibility === $package || !isset($locked['require'][$package])) {
 				continue;
 			}
-
-			if ($compatibility === $package) {
-				if (!Versions::satisfies($candidate['version_normalized'], Versions::lineConstraint($installed))) {
-					$blockers[] = $package . ' ' . Versions::lineLabel($installed);
-				}
-				continue;
-			}
-
-			$locked = $this->platform->locked[$compatibility] ?? null;
-			if ($locked === null) {
-				continue;
-			}
-
-			if (isset($require[$compatibility])
-				&& !Versions::intersects($require[$compatibility], Versions::lineConstraint($locked['normalized']))) {
-				$blockers[] = $compatibility . ' ' . $require[$compatibility];
-			}
-
-			if (isset($locked['require'][$package])
-				&& !$this->lineAllows($compatibility, $locked, $package, $candidate['version_normalized'])) {
+			if (!$this->lineAllows($compatibility, $locked, $package, $candidate['version_normalized'])) {
 				$blockers[] = $compatibility . ' ' . Versions::lineLabel($locked['normalized']);
 			}
 		}
@@ -133,8 +125,38 @@ class CompatibilityChecker
 	}
 
 	/**
-	 * Whether any release on the locked line of a compatibility package accepts the candidate.
-	 * Falls back to the locked release's own requirement when the package cannot be resolved.
+	 * Requirements of a release that the platform cannot meet: a PHP version other than the
+	 * target, or a compatibility package outside its locked major.
+	 *
+	 * @param array<string, string> $require the release's requirements, lowercase keys
+	 * @param string $self package the release belongs to, whose own line is not checked here
+	 * @return string[] blockers, e.g. `php ^8.3`, `silverstripe/framework ^6`
+	 */
+	private function forwardBlockers(array $require, string $self): array
+	{
+		$blockers = [];
+
+		if ($this->platform->php !== null && isset($require['php'])
+			&& !Versions::satisfies($this->platform->php, $require['php'])) {
+			$blockers[] = 'php ' . $require['php'];
+		}
+
+		foreach ($this->platform->locked as $compatibility => $locked) {
+			if ($compatibility === $self || !isset($require[$compatibility])) {
+				continue;
+			}
+			if (!Versions::intersects($require[$compatibility], Versions::lineConstraint($locked['normalized']))) {
+				$blockers[] = $compatibility . ' ' . $require[$compatibility];
+			}
+		}
+
+		return $blockers;
+	}
+
+	/**
+	 * Whether a release on the locked line of a compatibility package accepts the candidate and
+	 * can itself be installed on the platform. Falls back to the locked release's own
+	 * requirement when the package cannot be resolved.
 	 *
 	 * @param string $compatibility compatibility package name
 	 * @param array{version: string, normalized: string, require: array<string, string>} $locked locked release of it
@@ -145,19 +167,36 @@ class CompatibilityChecker
 	private function lineAllows(string $compatibility, array $locked, string $package, string $candidate): bool
 	{
 		$line = Versions::lineConstraint($locked['normalized']);
-		$releases = $this->source->versions($compatibility) ?? [['version_normalized' => $locked['normalized'], 'require' => $locked['require']]];
+		$maxRank = Versions::maxCandidateRank($locked['version']);
+		$releases = $this->source->versions($compatibility)
+			?? [['version' => $locked['version'], 'version_normalized' => $locked['normalized'], 'require' => $locked['require']]];
 
 		foreach ($releases as $release) {
 			$normalized = $release['version_normalized'] ?? null;
 			if (!is_string($normalized) || !Versions::satisfies($normalized, $line)) {
 				continue;
 			}
-			$require = is_array($release['require'] ?? null) ? array_change_key_case($release['require'], CASE_LOWER) : [];
-			if (!isset($require[$package]) || Versions::satisfies($candidate, $require[$package])) {
+			if (Versions::stabilityRank((string) ($release['version'] ?? $normalized)) > $maxRank) {
+				continue;
+			}
+			$require = $this->requirements($release);
+			if (isset($require[$package]) && !Versions::satisfies($candidate, $require[$package])) {
+				continue;
+			}
+			if (!$this->forwardBlockers($require, $compatibility)) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * @param array<string, mixed> $release a release from the version source
+	 * @return array<string, string> its requirements, lowercase keys
+	 */
+	private function requirements(array $release): array
+	{
+		return is_array($release['require'] ?? null) ? array_change_key_case($release['require'], CASE_LOWER) : [];
 	}
 }

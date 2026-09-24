@@ -170,4 +170,64 @@ class CompatibilityCheckerTest extends TestCase
 
 		$this->assertSame('1.1.0', $result->compatible);
 	}
+
+	public function testPreReleaseOfACompatibilityPackageDoesNotUnlockAnUpdate(): void
+	{
+		$result = $this->checker([
+			'acme/module' => [
+				'1.0.0' => [],
+				'2.0.0' => [],
+			],
+			'silverstripe/framework' => [
+				'5.2.22' => ['acme/module' => '^1'],
+				'5.3.0-beta1' => ['acme/module' => '^1 || ^2'],
+			],
+		], '8.3', ['packages' => [
+			['name' => 'silverstripe/framework', 'version' => '5.2.22', 'require' => ['acme/module' => '^1']],
+		]])->check('acme/module', '1.0.0');
+
+		$this->assertSame(CompatibilityResult::BLOCKED, $result->status);
+		$this->assertSame(['silverstripe/framework 5.x'], $result->blockers);
+	}
+
+	public function testCompatibilityReleaseThatNeedsANewerPhpDoesNotUnlockAnUpdate(): void
+	{
+		$result = $this->checker([
+			'acme/module' => [
+				'1.0.0' => [],
+				'2.0.0' => [],
+			],
+			'silverstripe/admin' => [
+				'2.2.0' => ['acme/module' => '^1'],
+				'2.4.0' => ['php' => '^8.3', 'acme/module' => '^1 || ^2'],
+			],
+		], '8.1', ['packages' => [
+			['name' => 'silverstripe/admin', 'version' => '2.2.0', 'require' => ['acme/module' => '^1']],
+		]])->check('acme/module', '1.0.0');
+
+		$this->assertSame(CompatibilityResult::BLOCKED, $result->status);
+		$this->assertSame(['silverstripe/admin 2.x'], $result->blockers);
+	}
+
+	public function testNamedBranchInstallIsUnknown(): void
+	{
+		$result = $this->checker([
+			'acme/lib' => ['1.5.0' => []],
+		])->check('acme/lib', 'dev-main abc1234');
+
+		$this->assertSame(CompatibilityResult::UNKNOWN, $result->status);
+	}
+
+	public function testPhpIsCheckedWithoutBeingListedAsACompatibilityPackage(): void
+	{
+		$checker = new CompatibilityChecker(
+			Platform::fromProject([], [], '8.1', ['silverstripe/framework']),
+			new ArrayVersionSource(['acme/lib' => ['1.0.0' => [], '1.1.0' => ['php' => '^8.3']]]),
+		);
+
+		$result = $checker->check('acme/lib', '1.0.0');
+
+		$this->assertSame(CompatibilityResult::BLOCKED, $result->status);
+		$this->assertSame(['php ^8.3'], $result->blockers);
+	}
 }

@@ -41,14 +41,16 @@ Packages with an update that works on the project's current PHP version and core
 For each outdated package, the action reads every release from [Packagist](https://packagist.org) and picks the newest one that:
 
 - is newer than the installed version, and no less stable (a stable install only considers stable releases),
-- has a `php` requirement satisfied by `php-version`,
+- has a `php` requirement satisfied by the project's PHP version (`config.platform.php`, else `php-version`),
 - only requires versions of the `compatibility-packages` within their installed major, e.g. `^5.3` is fine on Silverstripe 5.2 but `^6` is not,
-- is allowed by some release of each compatibility package within its installed major,
+- is allowed by some release of each compatibility package within its installed major, where that release is no less stable than the installed one and itself meets the two rules above,
 - stays within its own installed major, when it is itself a compatibility package.
 
 "Blocked by" lists the reasons the latest release fails: a requirement it has (`silverstripe/framework ^6`), or an installed release line that does not allow it (`silverstripe/cms 5.x`).
 
-Packages not on Packagist (private repositories, VCS forks) are listed as "compatibility unknown". Abandoned packages always stay in the table.
+Packages not on Packagist (private repositories, VCS forks) and packages installed from a named branch such as `dev-main` are listed as "compatibility unknown". Abandoned packages always stay in the table.
+
+If the `composer outdated` output cannot be read, the report says so and points to the workflow log.
 
 ## Inputs
 
@@ -58,11 +60,11 @@ Extra arguments passed to the `composer outdated` command, separated with a spac
 
 ### `php-version`
 
-The PHP version updates must work with, e.g. `8.3`. A `major.minor` version stands for the newest patch release of that line. Defaults to `config.platform.php` in `composer.json`; with neither, PHP requirements are not checked.
+The PHP version the project runs on, e.g. `8.3`, used when `composer.json` has no `config.platform.php` (which composer itself treats as the platform, so it takes precedence). A `major.minor` version, optionally followed by `.x` or `.*`, stands for the newest patch release of that line. With neither, PHP requirements are not checked and the log says so.
 
 ### `compatibility-packages`
 
-Space-separated packages whose installed major version updates must stay on. Defaults to `php silverstripe/framework silverstripe/cms silverstripe/admin`. Packages that are not installed are ignored.
+Space-separated packages whose installed major version updates must stay on. Defaults to `silverstripe/framework silverstripe/cms silverstripe/admin`. Packages that are not installed, or are installed from a named branch, are ignored. PHP is always checked and does not need listing.
 
 ## Outputs
 

@@ -9,8 +9,10 @@ EXIT_CODE=$?
 
 cat "$OUTDATED_FILE"
 
-# Split the outdated packages by compatibility with PHP_VERSION and COMPATIBILITY_PACKAGES
-REPORT=$(php /action/bin/report.php "$OUTDATED_FILE")
+# Split the outdated packages by compatibility with TARGET_PHP_VERSION and COMPATIBILITY_PACKAGES
+if ! REPORT=$(php -d display_errors=stderr /action/bin/report.php "$OUTDATED_FILE"); then
+	REPORT="_Could not check for outdated packages. See the workflow log for details._"
+fi
 
 echo "$REPORT"
 
