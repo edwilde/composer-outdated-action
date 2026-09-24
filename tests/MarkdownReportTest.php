@@ -73,7 +73,7 @@ class MarkdownReportTest extends TestCase
 | Package | Current | Compatible | Latest | Compare | Details |
 | ------- | ------- | ---------- | ------ | ------- | ------- |
 | [acme/compatible](https://github.com/acme/compatible) | 1.0.0 | 1.2.0 | 2.0.0 | [Compare](https://github.com/acme/compatible/compare/1.0.0...1.2.0) | A package \| with a long d… |
-| :warning: [acme/old](https://github.com/acme/old) | 1.0.0 | - | 2.0.0 | [Compare](https://github.com/acme/old/compare/1.0.0...2.0.0) | **Abandoned**, use `acme/new` |
+| :warning: [acme/old](https://github.com/acme/old) | 1.0.0 | - | 2.0.0 | [Compare](https://github.com/acme/old/compare/1.0.0...2.0.0) | **Abandoned**, use `acme/new`; blocked by `php ^8.3` |
 
 <details>
 <summary>2 outdated packages are not compatible with the current platform</summary>

@@ -25,7 +25,7 @@ Packages with an update that works on the project's current PHP version and core
 | ------- | ------- | ---------- | ------ | ------- | ------- |
 | [dnadesign/silverstripe-elemental](https://github.com/silverstripe/silverstripe-elemental) | 5.0.4 | 5.4.10 | 6.2.3 | [Compare](https://github.com/silverstripe/silverstripe-elemental/compare/5.0.4...5.4.10) | Elemental pagetype and co… |
 | [guzzlehttp/guzzle](https://github.com/guzzle/guzzle) | 7.5.3 | 7.15.5 | 8.2.0 | [Compare](https://github.com/guzzle/guzzle/compare/7.5.3...7.15.5) | Guzzle is a PHP HTTP clie… |
-| :warning: acme/private-thing | 1.0.0 | - | 2.0.0 | - | **Abandoned**, use `acme/new-thing` |
+| :warning: acme/private-thing | 1.0.0 | - | 2.0.0 | - | **Abandoned**, use `acme/new-thing`; compatibility unknown |
 
 <details>
 <summary>1 outdated package is not compatible with the current platform</summary>

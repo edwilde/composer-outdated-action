@@ -1,0 +1,6 @@
+{
+	"packages": [
+		{"name": "acme/minified", "version": "1.4.0", "require": {"silverstripe/framework": "^5"}},
+		{"name": "silverstripe/framework", "version": "5.2.22", "require": {"php": "^8.1"}}
+	]
+}

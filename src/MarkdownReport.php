@@ -89,7 +89,7 @@ class MarkdownReport
 		$details = $this->truncate((string) ($package['description'] ?? ''));
 		if ($abandoned) {
 			$replacement = is_string($package['abandoned']) ? sprintf(', use `%s`', $package['abandoned']) : '';
-			$details = '**Abandoned**' . $replacement;
+			$details = '**Abandoned**' . $replacement . $this->abandonedCompatibility($result);
 		}
 
 		return $this->row([
@@ -100,6 +100,32 @@ class MarkdownReport
 			$this->compare($package, $current, $compatible ?? $latest),
 			$details,
 		]);
+	}
+
+	/**
+	 * Why an abandoned package has no compatible update, for its Details cell.
+	 *
+	 * @param CompatibilityResult $result its compatibility
+	 * @return string `; blocked by ...`, `; compatibility unknown`, or empty when it has a compatible update
+	 */
+	private function abandonedCompatibility(CompatibilityResult $result): string
+	{
+		return match ($result->status) {
+			CompatibilityResult::BLOCKED => '; blocked by ' . $this->blockedBy($result),
+			CompatibilityResult::UNKNOWN => '; compatibility unknown',
+			default => '',
+		};
+	}
+
+	/**
+	 * Blockers as a comma-separated list of code spans.
+	 *
+	 * @param CompatibilityResult $result a blocked result
+	 * @return string markdown
+	 */
+	private function blockedBy(CompatibilityResult $result): string
+	{
+		return implode(', ', array_map(fn ($blocker) => '`' . $blocker . '`', $result->blockers));
 	}
 
 	/**
@@ -115,7 +141,7 @@ class MarkdownReport
 		$latest = $result->latest ?? ($package['latest'] ?? '');
 		$blockedBy = $result->status === CompatibilityResult::UNKNOWN
 			? 'compatibility unknown'
-			: implode(', ', array_map(fn ($blocker) => '`' . $blocker . '`', $result->blockers));
+			: $this->blockedBy($result);
 
 		return $this->row([
 			$this->name($package),

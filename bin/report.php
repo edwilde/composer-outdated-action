@@ -6,6 +6,7 @@
  * Reads composer.json and composer.lock from the working directory. Environment:
  *   TARGET_PHP_VERSION      PHP version the project runs on, used when composer.json has no config.platform.php
  *   COMPATIBILITY_PACKAGES  space-separated packages whose locked major version must be kept
+ *   PACKAGIST_URL           p2 metadata endpoint, defaults to https://repo.packagist.org/p2
  *
  * Exits 1 without a report when the outdated JSON cannot be read.
  */
@@ -55,5 +56,5 @@ if ($platform->php === null) {
 	fwrite(STDERR, "No usable PHP version from config.platform.php or php-version; PHP requirements are not checked.\n");
 }
 
-$report = new MarkdownReport(new CompatibilityChecker($platform, new PackagistVersionSource()));
+$report = new MarkdownReport(new CompatibilityChecker($platform, new PackagistVersionSource(getenv('PACKAGIST_URL') ?: 'https://repo.packagist.org/p2')));
 echo $report->render($packages);
