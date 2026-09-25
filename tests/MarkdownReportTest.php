@@ -112,4 +112,16 @@ MD;
 
 		$this->assertSame("_No compatible updates available._\n", $markdown);
 	}
+
+	/**
+	 * Check a dev-branch install compares from its commit
+	 */
+	public function testDevBranchInstallComparesFromItsCommit(): void
+	{
+		$markdown = $this->report()->render([
+			$this->package('acme/compatible', '1.0.x-dev 61491f2', '2.0.0'),
+		]);
+
+		$this->assertStringContainsString('(https://github.com/acme/compatible/compare/61491f2...1.2.0)', $markdown);
+	}
 }

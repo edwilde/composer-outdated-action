@@ -6,8 +6,8 @@ use Composer\Semver\VersionParser;
 use UnexpectedValueException;
 
 /**
- * The versions an update has to stay compatible with: the target PHP version and the locked
- * versions of the compatibility packages.
+ * The versions an update has to stay compatible with: the target PHP version, the locked
+ * versions of the compatibility packages, and the installed packages that other packages hold back.
  */
 class Platform
 {
@@ -18,11 +18,15 @@ class Platform
 	 * @param array<string, array{version: string, normalized: string, require: array<string, string>}> $locked
 	 *     locked compatibility packages keyed by lowercase name
 	 * @param string[] $compatibilityPackages lowercase package names
+	 * @param array<string, array{normalized: string, requiredBy: array<string, string>}> $installed
+	 *     every package installed on a numbered release, keyed by lowercase name, with the
+	 *     constraints the project and other installed packages put on it
 	 */
 	public function __construct(
 		public readonly ?string $php,
 		public readonly array $locked,
 		public readonly array $compatibilityPackages,
+		public readonly array $installed = [],
 	) {
 	}
 
@@ -46,16 +50,20 @@ class Platform
 		$phpVersion = ($composerJson['config']['platform']['php'] ?? null) ?: $phpVersion;
 		$compatibilityPackages = array_values(array_diff($compatibilityPackages, ['php']));
 
+		$packages = array_merge($composerLock['packages'] ?? [], $composerLock['packages-dev'] ?? []);
+
 		$locked = [];
-		foreach (array_merge($composerLock['packages'] ?? [], $composerLock['packages-dev'] ?? []) as $package) {
+		$installed = [];
+		foreach ($packages as $package) {
 			$name = strtolower($package['name'] ?? '');
-			if (!in_array($name, $compatibilityPackages, true)) {
+			$normalized = Versions::normalize($package['version'] ?? '');
+			// lazy: a package locked to a named branch is not checked; resolve the branch alias
+			// from the lock's `extra.branch-alias` if that becomes common.
+			if ($name === '' || $normalized === null || Versions::isNamedBranch($normalized)) {
 				continue;
 			}
-			$normalized = Versions::normalize($package['version'] ?? '');
-			// lazy: a compatibility package locked to a named branch is not checked; resolve the
-			// branch alias from the lock's `extra.branch-alias` if that becomes common.
-			if ($normalized === null || Versions::isNamedBranch($normalized)) {
+			$installed[$name] = ['normalized' => $normalized, 'requiredBy' => []];
+			if (!in_array($name, $compatibilityPackages, true)) {
 				continue;
 			}
 			$locked[$name] = [
@@ -65,7 +73,19 @@ class Platform
 			];
 		}
 
-		return new self(self::normalizePhp($phpVersion), $locked, $compatibilityPackages);
+		$requirers = ['composer.json' => array_merge($composerJson['require'] ?? [], $composerJson['require-dev'] ?? [])];
+		foreach ($packages as $package) {
+			$requirers[strtolower($package['name'] ?? '')] = $package['require'] ?? [];
+		}
+		foreach ($requirers as $requirer => $require) {
+			foreach (array_change_key_case($require, CASE_LOWER) as $name => $constraint) {
+				if (isset($installed[$name]) && is_string($constraint)) {
+					$installed[$name]['requiredBy'][$requirer] = $constraint;
+				}
+			}
+		}
+
+		return new self(self::normalizePhp($phpVersion), $locked, $compatibilityPackages, $installed);
 	}
 
 	/**

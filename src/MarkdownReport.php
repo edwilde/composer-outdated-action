@@ -187,7 +187,20 @@ class MarkdownReport
 		if ($github === null || $to === '') {
 			return '-';
 		}
-		return sprintf('[Compare](%s/compare/%s...%s)', $github, $from, $to);
+		return sprintf('[Compare](%s/compare/%s...%s)', $github, $this->ref($from), $this->ref($to));
+	}
+
+	/**
+	 * Git ref for a version: the commit of a dev-branch install such as `5.x-dev 68f8066`,
+	 * otherwise the version itself.
+	 *
+	 * @param string $version version as composer reports it
+	 * @return string tag or commit
+	 */
+	private function ref(string $version): string
+	{
+		$parts = explode(' ', trim($version));
+		return end($parts);
 	}
 
 	/**
