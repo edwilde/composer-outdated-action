@@ -75,4 +75,26 @@ class PlatformTest extends TestCase
 		$this->assertSame(['acme/framework', 'acme/admin'], array_keys($platform->locked));
 		$this->assertSame(['acme/framework', 'acme/cms', 'acme/admin'], $platform->compatibilityPackages);
 	}
+
+	/**
+	 * Check installed packages record what the project and other packages require of them
+	 */
+	public function testInstalledPackagesRecordTheirRequirers(): void
+	{
+		$platform = Platform::fromProject(['require-dev' => ['Acme/Tool' => '^1']], [
+			'packages' => [
+				['name' => 'acme/lib', 'version' => '2.1.0'],
+				['name' => 'acme/cms', 'version' => '5.2.5', 'require' => ['Acme/Lib' => '^2']],
+				['name' => 'acme/branch', 'version' => 'dev-main'],
+			],
+			'packages-dev' => [
+				['name' => 'acme/tool', 'version' => '1.0.0', 'require' => ['acme/lib' => '^2.1']],
+			],
+		], null, []);
+
+		$this->assertSame(['acme/lib', 'acme/cms', 'acme/tool'], array_keys($platform->installed));
+		$this->assertSame('2.1.0.0', $platform->installed['acme/lib']['normalized']);
+		$this->assertSame(['acme/cms' => '^2', 'acme/tool' => '^2.1'], $platform->installed['acme/lib']['requiredBy']);
+		$this->assertSame(['composer.json' => '^1'], $platform->installed['acme/tool']['requiredBy']);
+	}
 }

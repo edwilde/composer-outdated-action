@@ -274,4 +274,71 @@ class CompatibilityCheckerTest extends TestCase
 		$this->assertSame(CompatibilityResult::BLOCKED, $result->status);
 		$this->assertSame(['php ^8.3'], $result->blockers);
 	}
+
+	/**
+	 * Check a new major of an installed package that another package holds back is blocked
+	 */
+	public function testBlocksANewMajorOfAnInstalledPackageThatAnotherPackageHoldsBack(): void
+	{
+		$result = $this->checker([
+			'acme/module' => [
+				'1.0.0' => ['acme/assets' => '^2'],
+				'1.1.0' => ['acme/assets' => '^2.4'],
+				'2.0.0' => ['acme/assets' => '^3'],
+			],
+		], '8.1', ['packages' => [
+			['name' => 'acme/framework', 'version' => '5.2.22'],
+			['name' => 'acme/cms', 'version' => '5.2.5', 'require' => ['acme/assets' => '^2.1']],
+			['name' => 'acme/assets', 'version' => '2.1.0'],
+			['name' => 'acme/module', 'version' => '1.0.0', 'require' => ['acme/assets' => '^2']],
+		]])->check('acme/module', '1.0.0');
+
+		$this->assertSame('1.1.0', $result->compatible);
+		$this->assertSame('2.0.0', $result->latest);
+		$this->assertSame(CompatibilityResult::BLOCKED, $this->checker([
+			'acme/module' => ['1.0.0' => [], '2.0.0' => ['acme/assets' => '^3']],
+		], '8.1', ['packages' => [
+			['name' => 'acme/cms', 'version' => '5.2.5', 'require' => ['acme/assets' => '^2.1']],
+			['name' => 'acme/assets', 'version' => '2.1.0'],
+		]])->check('acme/module', '1.0.0')->status);
+	}
+
+	/**
+	 * Check a new major of a package only the updated package requires does not block
+	 */
+	public function testNewMajorOfAPackageOnlyTheUpdatedPackageRequiresDoesNotBlock(): void
+	{
+		$result = $this->checker([
+			'acme/tool' => [
+				'1.0.0' => ['acme/helper' => '^1'],
+				'2.0.0' => ['acme/helper' => '^2'],
+			],
+		], '8.1', ['packages' => [
+			['name' => 'acme/tool', 'version' => '1.0.0', 'require' => ['acme/helper' => '^1']],
+			['name' => 'acme/helper', 'version' => '1.4.0'],
+		]])->check('acme/tool', '1.0.0');
+
+		$this->assertSame('2.0.0', $result->compatible);
+	}
+
+	/**
+	 * Check the project's own composer.json requirement holds a package back
+	 */
+	public function testProjectRequirementHoldsAPackageBack(): void
+	{
+		$checker = new CompatibilityChecker(
+			Platform::fromProject(
+				['require' => ['acme/assets' => '^2']],
+				['packages' => [['name' => 'acme/assets', 'version' => '2.1.0']]],
+				'8.1',
+				[],
+			),
+			new ArrayVersionSource(['acme/module' => ['1.0.0' => [], '2.0.0' => ['acme/assets' => '^3']]]),
+		);
+
+		$result = $checker->check('acme/module', '1.0.0');
+
+		$this->assertSame(CompatibilityResult::BLOCKED, $result->status);
+		$this->assertSame(['acme/assets ^3'], $result->blockers);
+	}
 }

@@ -128,7 +128,8 @@ class CompatibilityChecker
 
 	/**
 	 * Requirements of a release that the platform cannot meet: a PHP version other than the
-	 * target, or a compatibility package outside its locked major.
+	 * target, a compatibility package outside its locked major, or a new major of an installed
+	 * package that the project or another installed package holds back.
 	 *
 	 * @param array<string, string> $require the release's requirements, lowercase keys
 	 * @param string $self package the release belongs to, whose own line is not checked here
@@ -152,7 +153,41 @@ class CompatibilityChecker
 			}
 		}
 
+		foreach ($this->platform->installed as $name => $installed) {
+			if ($name === $self || isset($this->platform->locked[$name]) || !isset($require[$name])) {
+				continue;
+			}
+			if (Versions::intersects($require[$name], Versions::lineConstraint($installed['normalized']))) {
+				continue;
+			}
+			if ($this->heldBack($installed['requiredBy'], $self, $require[$name])) {
+				$blockers[] = $name . ' ' . $require[$name];
+			}
+		}
+
 		return $blockers;
+	}
+
+	/**
+	 * Whether the project or an installed package other than the one being updated rules out a
+	 * constraint on a package they require.
+	 *
+	 * @param array<string, string> $requiredBy constraints on the package, keyed by requirer
+	 * @param string $self package being updated, whose own constraint is replaced by the update
+	 * @param string $constraint constraint the update puts on the package
+	 * @return bool true when some requirer's constraint does not overlap it
+	 */
+	private function heldBack(array $requiredBy, string $self, string $constraint): bool
+	{
+		// lazy: compares against the requirer's locked constraint only; look up newer releases on
+		// the requirer's own line, as lineAllows does, if stale locks cause false blocks.
+		foreach ($requiredBy as $requirer => $requirement) {
+			if ($requirer !== $self && !Versions::intersects($constraint, $requirement)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

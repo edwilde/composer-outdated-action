@@ -46,10 +46,11 @@ For each outdated package, the action reads every release from [Packagist](https
 - only requires versions of the `compatibility-packages` within their installed major, e.g. `acme/framework ^5.3` is fine with 5.2 installed but `^6` is not,
 - is allowed by some release of each compatibility package within its installed major, where that release is no less stable than the installed one and itself meets the two rules above,
 - stays within its own installed major, when it is itself a compatibility package.
+- does not need a new major of an installed package that the project's `composer.json` or another installed package holds back, e.g. `acme/assets ^3` when `acme/cms` requires `acme/assets ^2`.
 
 "Blocked by" lists the reasons the latest release fails: a requirement it has (`acme/framework ^6`), or an installed release line that does not allow it (`acme/cms 5.x`).
 
-With no `compatibility-packages`, only PHP requirements are checked.
+With no `compatibility-packages`, only PHP requirements and installed packages that are held back are checked.
 
 Packages not on Packagist (private repositories, VCS forks) and packages installed from a named branch such as `dev-main` are listed as "compatibility unknown". Abandoned packages always stay in the table.
 
