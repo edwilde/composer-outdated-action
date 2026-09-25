@@ -1,0 +1,13 @@
+{
+	"installed": [
+		{
+			"name": "acme/minified",
+			"version": "1.4.0",
+			"latest": "2.1.0",
+			"latest-status": "update-possible",
+			"source": "https://github.com/acme/minified/tree/1.4.0",
+			"description": "Fixture",
+			"abandoned": false
+		}
+	]
+}

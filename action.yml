@@ -8,9 +8,16 @@ inputs:
   extra-arguments:
     description: 'Additional arguments passed to composer outdated command'
     required: false
+  php-version:
+    description: 'PHP version the project runs on, used when composer.json has no config.platform.php'
+    required: false
+  compatibility-packages:
+    description: 'Space-separated packages whose installed major version updates must stay compatible with'
+    required: false
+    default: ''
 outputs:
   composer_outdated:
-    description: 'Markdown table of outdated dependencies'
+    description: 'Markdown table of compatible updates, with incompatible packages collapsed below it'
   composer_outdated_abandoned:
     description: 'List of abandoned packages'
   composer_outdated_exit_code:
@@ -18,5 +25,8 @@ outputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  env:
+    TARGET_PHP_VERSION: ${{ inputs.php-version }}
+    COMPATIBILITY_PACKAGES: ${{ inputs.compatibility-packages }}
   args:
     - ${{ inputs.extra-arguments }}

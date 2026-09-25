@@ -1,0 +1,10 @@
+{
+	"require": {
+		"acme/minified": "^1.4"
+	},
+	"config": {
+		"platform": {
+			"php": "8.1.2"
+		}
+	}
+}
